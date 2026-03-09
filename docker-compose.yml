@@ -1,0 +1,31 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mockview_db
+    ports: ["5432:5432"]
+    volumes: [postgres_data:/var/lib/postgresql/data]
+
+  backend:
+    build: ./backend
+    ports: ["8000:8000"]
+    environment:
+      DATABASE_URL: postgresql://postgres:password@db:5432/mockview_db
+      SECRET_KEY: change-me-in-production-use-random-32-chars
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    depends_on: [db]
+    volumes: [./backend:/app, storage_data:/app/storage]
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host"
+    ports: ["5173:5173"]
+    volumes: [./frontend:/app]
+
+volumes:
+  postgres_data:
+  storage_data:
